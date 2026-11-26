@@ -1,0 +1,27 @@
+# Python bytecode & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# Large raw datasets & generated outputs (do not commit raw genomes/large outputs)
+data/
+results/
+*.bam
+*.vcf
+*.vcf.gz
+*.fastq.gz
+*.fasta
+*.log
+*.trees
