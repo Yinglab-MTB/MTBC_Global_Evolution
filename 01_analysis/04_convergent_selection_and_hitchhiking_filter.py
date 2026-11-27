@@ -1,18 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Step 04: Multi-Evidence Core-Genome Convergent Positive Selection &
-         Clonal Clade-Hitchhiking Filtration.
-
-Integrates allele-frequency differentiation (Δf, BH-FDR), gene-level Fst,
-nucleotide diversity (π), and Tajima's D across six complementary contrasts
-(global_vs_rooted, L2.2 vs L2.1, and L4.1/L4.3/L4.4/L4.8 vs other L4; n = 23,533),
-audits and filters 18 single-SNP ancestral clade-hitchhiking artifacts (Clusters A/B/C),
-and outputs:
-  - Table_S3_Purified_Convergent_Adaptive_Genes.tsv (Tier 1: 9 cross-L2+L4 multi-hit;
-    Tier 2: 5 within-L4 multi-hit; Tier 2b: 2 cross-lineage single-hit candidates)
-  - Table_S3b_Flagged_Clade_Hitchhiking_Candidates.tsv (18 filtered clade artifacts)
-"""
-
 import sys
 from pathlib import Path
 
@@ -24,15 +10,13 @@ from config import DATA_DIR, TABLES_DIR, ensure_output_dirs
 
 
 def run_convergent_selection_audit():
-    print("[01_analysis | Step 4] Auditing convergent selection scan & filtering clonal hitchhiking artifacts...")
     ensure_output_dirs()
 
-    f_dir = DATA_DIR / "Fig. 6"
-    df_sum = pd.read_csv(f_dir / "candidate_gene_summary_all_comparisons.tsv", sep="\t")
-    df_coord = pd.read_csv(f_dir / "candidate_gene_coordinates.tsv", sep="\t")
-    df_int = pd.read_csv(f_dir / "candidate_gene_integrated_Fst_pi_TajimaD_evidence.tsv", sep="\t")
+    f_dir = DATA_DIR
+    df_sum = pd.read_csv(f_dir / "selection_candidate_genes_summary_all_comparisons.tsv", sep="\t")
+    df_coord = pd.read_csv(f_dir / "selection_candidate_genes_H37Rv_coordinates.tsv", sep="\t")
+    df_int = pd.read_csv(f_dir / "selection_candidate_genes_Fst_pi_TajimaD_all_contrasts.tsv", sep="\t")
 
-    # Aggregate gene-level population-genetic evidence across all six contrasts
     pop_agg = []
     for gene, g in df_int.groupby("gene_name"):
         comp_fst = dict(zip(g["comparison"], g["max_Fst"]))
@@ -70,7 +54,6 @@ def run_convergent_selection_audit():
         has_L2 = ("L22_vs_L21" in comps) or (pd.notna(row["Fst_L22_vs_L21"]) and row["Fst_L22_vs_L21"] >= 0.75)
         has_L4 = any(x in comps for x in ["L41_vs_otherL4", "L43_vs_otherL4", "L44_vs_otherL4", "L48_vs_otherL4"])
 
-        # Explicit filtration of single-SNP ancestral clade-hitchhiking clusters
         if n_mut == 1 and n_cmp >= 3:
             if 0.246 <= dfreq <= 0.248:
                 note = "FLAGGED_ClusterA_L4.7_L4.8_L4.9_H37Rv_clade_SNP (df~0.247)"
@@ -82,15 +65,12 @@ def run_convergent_selection_audit():
             if 0.613 <= dfreq <= 0.615:
                 return "Tier3_Flagged_Clade_Artifact", "FLAGGED_ClusterC_L4_dominant_clade_SNP (df~0.614)"
 
-        # Tier 1: Gold-standard cross-lineage (L2 + L4) multi-hit convergence (>=2 variants)
         if n_mut >= 2 and has_L2 and has_L4:
             return "Tier1_Gold_CrossLineage_MultiHit", "Independent multi-mutation convergence across BOTH L2 and L4"
 
-        # Tier 2: Within-L4 multi-hit convergence (>=2 variants across >=2 L4 comparisons)
         if n_mut >= 2 and n_cmp >= 2:
             return "Tier2_WithinLineage_MultiHit", "Multiple independent missense mutations across >=2 L4 sublineages"
 
-        # Tier 2b: Cross-lineage single-hit candidates with high Fst support
         if n_cmp >= 2 and has_L2 and has_L4:
             return "Tier2b_CrossLineage_SingleHit", "Cross-lineage signal with 1 catalogued mutation (verify site independence in VCF)"
 
@@ -120,7 +100,6 @@ def run_convergent_selection_audit():
     n_t1 = (df_purified["Purified_Tier"] == "Tier1_Gold_CrossLineage_MultiHit").sum()
     n_t2 = (df_purified["Purified_Tier"] == "Tier2_WithinLineage_MultiHit").sum()
     n_t2b = (df_purified["Purified_Tier"] == "Tier2b_CrossLineage_SingleHit").sum()
-    print(f"  Saved Table_S3 (Tier1={n_t1}, Tier2={n_t2}, Tier2b={n_t2b}) & Table_S3b ({len(df_art)} flagged clade artifacts).")
     return df_purified, df_art
 
 

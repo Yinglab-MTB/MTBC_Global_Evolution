@@ -27,7 +27,7 @@ from config import DATA_DIR, RESULTS_DIR
 
 STEPS = [
     "01_cohort_audit_and_spatial_metrics",
-    "02_beast_qc_and_L41_outlier_pruning",
+    "02_beast_qc",
     "03_cross_figure_phylodynamic_statistics",
     "04_convergent_selection_and_hitchhiking_filter",
     "05_drug_resistance_enrichment_analysis",
@@ -45,7 +45,6 @@ def main():
         mod = importlib.import_module(mod_name)
         mod.main()
 
-    print("=" * 72)
     print("ALL ANALYSIS STEPS COMPLETED SUCCESSFULLY.")
     print("=" * 72)
 
